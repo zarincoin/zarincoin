@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ZRNCoin – Sepolia Tester (Ledger/MetaMask)</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:#0b0f17; --card:#121826; --muted:#9aa3b2; --text:#e7ecf3; --accent:#4f8cff; --good:#2ecc71; --bad:#e74c3c;
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji'; background:var(--bg); color:var(--text); }
+    header { padding:16px 20px; border-bottom:1px solid #1f2937; display:flex; align-items:center; gap:12px; justify-content:space-between; }
+    header h1 { font-size:18px; margin:0; font-weight:600; letter-spacing:.3px; }
+    .wrap { max-width:1100px; margin:24px auto; padding:0 16px; display:grid; gap:16px; grid-template-columns: 1.2fr 1fr; }
+    .full { grid-column:1 / -1; }
+    .card { background:var(--card); border:1px solid #1f2937; border-radius:16px; padding:16px; }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .stack { display:grid; gap:10px; }
+    label { font-size:12px; color:var(--muted); }
+    input, select, button, textarea {
+      background:#0f1626; color:var(--text); border:1px solid #263143; outline:none;
+      padding:10px 12px; border-radius:10px; font-size:14px;
+    }
+    input:focus, textarea:focus { border-color:var(--accent); }
+    button { background:var(--accent); border:none; cursor:pointer; font-weight:600; }
+    button.secondary { background:#1c2435; border:1px solid #2a3650; }
+    button.danger { background: var(--bad); }
+    button.good { background: var(--good); color:#0b0f17; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .grid { display:grid; gap:12px; grid-template-columns: 1fr 1fr; }
+    .muted { color: var(--muted); }
+    .pill { padding:4px 8px; border-radius:999px; font-size:12px; border:1px solid #2a3650; background:#0f1626; }
+    .divider { height:1px; background:#1f2937; margin:10px 0; }
+    .small { font-size:12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ZRNCoin Tester · Sepolia</h1>
+    <div class="row">
+      <div id="net" class="pill">Network: <span id="netName">–</span></div>
+      <div id="acc" class="pill mono">Account: <span id="account">–</span></div>
+      <div id="role" class="pill">Role: <span id="roleTxt">–</span></div>
+      <button id="btnConnect">Connect Wallet</button>
+      <button id="btnSwitch" class="secondary" title="Switch to Sepolia">Switch to Sepolia</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <section class="card">
+      <div class="stack">
+        <div class="row" style="justify-content:space-between; align-items:flex-end;">
+          <div class="stack" style="min-width:320px;flex:1;">
+            <label>Contract Address (Sepolia)</label>
+            <input id="addr" class="mono" />
+          </div>
+          <div class="row">
+            <button id="btnLoad">Load</button>
+            <a id="scanLink" class="pill mono" target="_blank" href="#">Explorer</a>
+          </div>
+        </div>
+        <div id="status" class="muted small">Disconnected</div>
+        <div id="errors" class="small" style="color:#ff8080; white-space:pre-wrap;"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="stack">
+        <div class="grid">
+          <div class="stack"><label>Token Name</label><div class="mono" id="name">–</div></div>
+          <div class="stack"><label>Symbol</label><div class="mono" id="symbol">–</div></div>
+          <div class="stack"><label>Decimals</label><div class="mono" id="decimals">–</div></div>
+          <div class="stack"><label>Total Supply</label><div class="mono" id="supply">–</div></div>
+          <div class="stack"><label>Your Balance</label><div class="mono" id="balance">–</div></div>
+          <div class="stack"><label>Treasury (if exposed)</label><div class="mono" id="treasury">–</div></div>
+          <div class="stack"><label>Mint Interval (sec)</label><div class="mono" id="mintInterval">–</div></div>
+          <div class="stack"><label>Last Mint At (epoch)</label><div class="mono" id="lastMintAt">–</div></div>
+          <div class="stack"><label>Owner (if Ownable)</label><div class="mono" id="owner">–</div></div>
+          <div class="stack"><label>Next mint at</label><div class="mono" id="nextMintAt">–</div><div class="small muted" id="countdown">–</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card full">
+      <h3 style="margin-top:0;">Transfers & Allowances</h3>
+      <div class="grid">
+        <div class="stack">
+          <label>Transfer</label>
+          <input id="to" placeholder="Recipient address (0x...)" class="mono"/>
+          <input id="amt" placeholder="Amount (human units)" class="mono"/>
+          <div class="row">
+            <button id="btnTransfer">Send</button>
+            <div id="tx1" class="small muted mono"></div>
+          </div>
+        </div>
+        <div class="stack">
+          <label>Approve</label>
+          <input id="spender" placeholder="Spender address (0x...)" class="mono"/>
+          <input id="amt2" placeholder="Amount to approve (human units)" class="mono"/>
+          <div class="row">
+            <button id="btnApprove">Approve</button>
+            <button id="btnRevoke" class="secondary" title="Set allowance to 0">Revoke</button>
+            <div id="tx2" class="small muted mono"></div>
+          </div>
+          <div class="divider"></div>
+          <label>Check Allowance</label>
+          <input id="ownerAddr" placeholder="Owner (default: your account)" class="mono"/>
+          <input id="spenderAddr" placeholder="Spender" class="mono"/>
+          <div class="row">
+            <button id="btnAllowance">Check</button>
+            <div id="allowanceOut" class="small muted mono"></div>
+          </div>
+          <div class="divider"></div>
+          <label>Spender: transferFrom</label>
+          <input id="fromAddr" placeholder="From (owner who approved you)" class="mono"/>
+          <input id="toAddr" placeholder="To (recipient)" class="mono"/>
+          <input id="amt3" placeholder="Amount (human units)" class="mono"/>
+          <div class="row">
+            <button id="btnTransferFrom">transferFrom</button>
+            <div id="tx3b" class="small muted mono"></div>
+          </div>
+          <div class="small muted">
+            Tip: to use an allowance, connect with the <b>spender</b> wallet (the one approved),
+            set <b>From</b> = owner, then click <b>transferFrom</b>.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card full">
+      <h3 style="margin-top:0;">Admin / Extras</h3>
+      <div class="grid">
+        <div class="stack">
+          <div class="row">
+            <button id="btnMintNext" class="good">mintNextEmission()</button>
+            <button id="btnFinalize" class="danger">finalizeMinting()</button>
+          </div>
+          <div class="small muted">These calls are available to the owner only (<span id="ownerShort">–</span>).</div>
+        </div>
+        <div class="stack">
+          <input id="burnAmt" placeholder="Burn from treasury (human units)" class="mono"/>
+          <div class="row">
+            <button id="btnBurn" class="danger">burnFromTreasury(amount)</button>
+            <div id="tx3" class="small muted mono"></div>
+          </div>
+          <input id="newInterval" placeholder="new mintInterval (sec)" class="mono"/>
+          <div class="row">
+            <button id="btnSetInterval">setMintInterval(seconds)</button>
+            <div id="tx4" class="small muted mono"></div>
+          </div>
+        </div>
+      </div>
+      <div class="small muted">Write calls require a connected wallet on Sepolia and enough ETH for gas.</div>
+      <div id="adminErrors" class="small" style="color:#ff8080; white-space:pre-wrap;"></div>
+    </section>
+  </div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const state = {
+    provider: null,
+    signer: null,
+    account: null,
+    network: null,
+    contract: null,
+    decimals: 18,
+    contractAddr: null,
+    ownerAddr: null,
+  };
+
+  const ABI = [
+    "function name() view returns (string)",
+    "function symbol() view returns (string)",
+    "function decimals() view returns (uint8)",
+    "function totalSupply() view returns (uint256)",
+    "function balanceOf(address) view returns (uint256)",
+    "function transfer(address to, uint256 amount) returns (bool)",
+    "function approve(address spender, uint256 amount) returns (bool)",
+    "function allowance(address owner, address spender) view returns (uint256)",
+    "function transferFrom(address from, address to, uint256 amount) returns (bool)",
+    "function treasury() view returns (address)",
+    "function mintInterval() view returns (uint256)",
+    "function lastMintAt() view returns (uint256)",
+    "function owner() view returns (address)",
+    "function mintNextEmission()",
+    "function finalizeMinting()",
+    "function burnFromTreasury(uint256 amount)",
+    "function setMintInterval(uint256 seconds)"
+  ];
+
+  const sepolia = {
+    chainIdHex: "0xaa36a7",
+    chainIdDec: 11155111,
+    rpc: "https://rpc.sepolia.org",
+    explorer: "https://sepolia.etherscan.io"
+  };
+
+  function fmtUnits(bn) { try { return ethers.utils.formatUnits(bn, state.decimals); } catch { return String(bn); } }
+  function shortAddr(a) { return a ? a.slice(0,6) + "…" + a.slice(-4) : "–"; }
+  function setStatus(msg, isErr=false) { $("status").textContent = msg; $("errors").textContent = isErr ? msg : ""; }
+  function setAdminErr(msg) { $("adminErrors").textContent = msg || ""; }
+
+  function buildContract(runner) { return state.contractAddr ? new ethers.Contract(state.contractAddr, ABI, runner) : null; }
+
+  function ensureSignerForWrites() {
+    if (!state.signer) { setStatus("Connect wallet before sending transactions.", true); throw new Error("NO_SIGNER"); }
+    if (!state.contract) { setStatus("Load contract first.", true); throw new Error("NO_CONTRACT"); }
+    state.contract = state.contract.connect(state.signer);
+  }
+
+  function fmtLocal(ts) { try { const d=new Date(ts*1000); return d.toLocaleString(); } catch { return String(ts); } }
+  let countdownTimer = null;
+  function setNextMint(lastMintAt, interval) {
+    try {
+      const next = Number(lastMintAt) + Number(interval);
+      $("nextMintAt").textContent = next ? (fmtLocal(next) + " (epoch " + next + ")") : "n/a";
+      if (countdownTimer) clearInterval(countdownTimer);
+      const btn = $("btnMintNext"); const cd = $("countdown");
+      function tick() {
+        const now = Math.floor(Date.now()/1000);
+        const diff = next - now;
+        if (isNaN(diff)) { cd.textContent = "–"; btn.disabled = false; return; }
+        if (diff <= 0) { cd.textContent = "Ready to mint"; btn.disabled = false; return; }
+        btn.disabled = true;
+        const m = Math.floor(diff/60), s = diff%60;
+        cd.textContent = `Wait ${m ? m+'m ' : ''}${s}s`;
+      }
+      tick(); countdownTimer = setInterval(tick, 1000);
+    } catch {}
+  }
+
+  async function connect() {
+    if (!window.ethereum) { setStatus("No wallet found. Install MetaMask.", true); return; }
+    state.provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+    await state.provider.send("eth_requestAccounts", []);
+    state.signer = state.provider.getSigner();
+    state.account = await state.signer.getAddress();
+    state.network = await state.provider.getNetwork();
+    $("account").textContent = shortAddr(state.account);
+    $("netName").textContent = state.network ? state.network.name + " ("+ state.network.chainId +")" : "–";
+    window.ethereum.on("chainChanged", () => window.location.reload());
+    window.ethereum.on("accountsChanged", () => window.location.reload());
+    if (state.network.chainId !== sepolia.chainIdDec) { setStatus("Connected, but not on Sepolia. Click “Switch to Sepolia”.", true); $("btnSwitch").style.display = "inline-block"; }
+    else { $("btnSwitch").style.display = "none"; setStatus("Connected to Sepolia. Ready."); }
+    if (state.contract) { state.contract = state.contract.connect(state.signer); try { await refreshBalance(); } catch {} }
+    if (state.ownerAddr) {
+      const isOwner = state.account && state.ownerAddr && state.account.toLowerCase() === state.ownerAddr.toLowerCase();
+      $("roleTxt").textContent = isOwner ? "Owner" : "User";
+      $("role").style.background = isOwner ? "var(--good)" : "#0f1626";
+      $("role").style.color = isOwner ? "#0b0f17" : "var(--text)";
+    }
+  }
+
+  async function switchToSepolia() {
+    if (!window.ethereum) return;
+    try {
+      await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: sepolia.chainIdHex }] });
+    } catch (e) {
+      if (e && e.code === 4902) {
+        await window.ethereum.request({
+          method: "wallet_addEthereumChain",
+          params: [{ chainId: sepolia.chainIdHex, chainName: "Sepolia", rpcUrls: [sepolia.rpc],
+            nativeCurrency: { name: "SepoliaETH", symbol: "ETH", decimals: 18 }, blockExplorerUrls: [sepolia.explorer]}]
+        });
+      } else { setStatus("Switch error: " + (e.message || e), true); }
+    }
+  }
+
+  async function loadContract() {
+    setAdminErr("");
+    const addr = $("addr").value.trim();
+    if (!ethers.utils.isAddress(addr)) { setStatus("Invalid contract address", true); return; }
+    state.contractAddr = addr;
+    $("scanLink").href = sepolia.explorer + "/address/" + addr;
+    $("scanLink").textContent = "Explorer ↗";
+    const runner = state.signer || state.provider || new ethers.providers.JsonRpcProvider(sepolia.rpc);
+    state.contract = buildContract(runner);
+    try {
+      const [name, symbol, decimals, supply] = await Promise.all([
+        state.contract.name(),
+        state.contract.symbol(),
+        state.contract.decimals().catch(()=>18),
+        state.contract.totalSupply()
+      ]);
+      state.decimals = Number(decimals) || 18;
+      $("name").textContent = name; $("symbol").textContent = symbol;
+      $("decimals").textContent = state.decimals; $("supply").textContent = fmtUnits(supply);
+    } catch (e) { setStatus("Failed to read ERC20 metadata: " + (e.message || e), true); return; }
+    await refreshBalance();
+    const tryView = async (fn, el) => { try { const v = await fn(); $(el).textContent = (typeof v === "string") ? v : String(v); } catch { $(el).textContent = "n/a"; } };
+    await tryView(()=>state.contract.treasury(), "treasury");
+    let mi=null, lm=null;
+    try { mi = await state.contract.mintInterval(); $("mintInterval").textContent = String(mi); } catch { $("mintInterval").textContent = "n/a"; }
+    try { lm = await state.contract.lastMintAt(); $("lastMintAt").textContent = String(lm); } catch { $("lastMintAt").textContent = "n/a"; }
+    if (mi && lm) setNextMint(Number(lm), Number(mi));
+    try {
+      const owner = await state.contract.owner();
+      state.ownerAddr = owner; $("owner").textContent = owner; $("ownerShort").textContent = shortAddr(owner);
+      if (!$("ownerAddr").value) $("ownerAddr").value = owner;
+      if (!$("fromAddr").value) $("fromAddr").value = owner;
+      if (state.account) {
+        const isOwner = state.account.toLowerCase() === owner.toLowerCase();
+        $("roleTxt").textContent = isOwner ? "Owner" : "User";
+        $("role").style.background = isOwner ? "var(--good)" : "#0f1626";
+        $("role").style.color = isOwner ? "#0b0f17" : "var(--text)";
+      }
+    } catch { $("owner").textContent = "n/a"; $("ownerShort").textContent = "–"; }
+    setStatus("Contract loaded.");
+  }
+
+  async function doTransfer() {
+    setAdminErr("");
+    const to = $("to").value.trim();
+    const amt = $("amt").value.trim();
+    if (!ethers.utils.isAddress(to)) return setStatus("Bad recipient address", true);
+    if (!amt) return setStatus("Amount required", true);
+    try {
+      ensureSignerForWrites();
+      const value = ethers.utils.parseUnits(amt, state.decimals);
+      const tx = await state.contract.transfer(to, value);
+      $("tx1").textContent = "tx: " + tx.hash;
+      const rc = await tx.wait();
+      $("tx1").textContent = "confirmed in block " + rc.blockNumber;
+      await refreshBalance();
+    } catch (e) { setStatus("Transfer failed: " + (e.message || e), true); }
+  }
+
+  async function doApprove(setZero=false) {
+    setAdminErr("");
+    const spender = $("spender").value.trim();
+    const amt = setZero ? "0" : $("amt2").value.trim();
+    if (!ethers.utils.isAddress(spender)) return setStatus("Bad spender address", true);
+    if (!amt && !setZero) return setStatus("Amount required", true);
+    try {
+      ensureSignerForWrites();
+      const value = ethers.utils.parseUnits(amt, state.decimals);
+      const tx = await state.contract.approve(spender, value);
+      $("tx2").textContent = "tx: " + tx.hash;
+      const rc = await tx.wait();
+      $("tx2").textContent = "confirmed in block " + rc.blockNumber;
+    } catch (e) { setStatus("Approve failed: " + (e.message || e), true); }
+  }
+
+  async function checkAllowance() {
+    setAdminErr("");
+    const owner = ($("ownerAddr").value.trim() || state.account);
+    const spender = $("spenderAddr").value.trim();
+    if (!ethers.utils.isAddress(owner)) return setStatus("Bad owner address", true);
+    if (!ethers.utils.isAddress(spender)) return setStatus("Bad spender address", true);
+    try {
+      const v = await state.contract.allowance(owner, spender);
+      $("allowanceOut").textContent = fmtUnits(v);
+    } catch (e) { setStatus("Allowance failed: " + (e.message || e), true); }
+  }
+
+  async function doTransferFrom() {
+    setAdminErr("");
+    const from = $("fromAddr").value.trim();
+    const to = $("toAddr").value.trim();
+    const amt = $("amt3").value.trim();
+    if (!ethers.utils.isAddress(from)) return setStatus("Bad From address", true);
+    if (!ethers.utils.isAddress(to)) return setStatus("Bad To address", true);
+    if (!amt) return setStatus("Amount required", true);
+    try {
+      ensureSignerForWrites();
+      const value = ethers.utils.parseUnits(amt, state.decimals);
+      const tx = await state.contract.transferFrom(from, to, value);
+      $("tx3b").textContent = "tx: " + tx.hash;
+      const rc = await tx.wait();
+      $("tx3b").textContent = "confirmed in block " + rc.blockNumber;
+      await refreshBalance();
+    } catch (e) { setStatus("transferFrom failed: " + (e.message || e), true); }
+  }
+
+  async function refreshBalance() {
+    try {
+      const who = state.account;
+      if (who && state.contract) {
+        const bal = await state.contract.balanceOf(who);
+        $("balance").textContent = fmtUnits(bal);
+      } else {
+        $("balance").textContent = "Connect wallet";
+      }
+    } catch { $("balance").textContent = "–"; }
+  }
+
+  async function mintNext() {
+    try {
+      ensureSignerForWrites();
+      const tx = await state.contract.mintNextEmission();
+      setAdminErr("mintNextEmission tx: " + tx.hash);
+      await tx.wait(); await loadContract();
+    } catch (e) { setAdminErr("mintNextEmission failed: " + (e.message || e)); }
+  }
+  async function finalize() {
+    try {
+      ensureSignerForWrites();
+      const tx = await state.contract.finalizeMinting();
+      setAdminErr("finalizeMinting tx: " + tx.hash);
+      await tx.wait(); await loadContract();
+    } catch (e) { setAdminErr("finalizeMinting failed: " + (e.message || e)); }
+  }
+  async function burnFromTreasury() {
+    try {
+      ensureSignerForWrites();
+      const amt = $("burnAmt").value.trim();
+      if (!amt) return setAdminErr("Enter amount");
+      const value = ethers.utils.parseUnits(amt, state.decimals);
+      const tx = await state.contract.burnFromTreasury(value);
+      setAdminErr("burnFromTreasury tx: " + tx.hash);
+      await tx.wait(); await loadContract();
+    } catch (e) { setAdminErr("burnFromTreasury failed: " + (e.message || e)); }
+  }
+  async function setIntervalFn() {
+    try {
+      ensureSignerForWrites();
+      const secs = $("newInterval").value.trim();
+      if (!secs) return setAdminErr("Enter seconds");
+      const tx = await state.contract.setMintInterval(ethers.BigNumber.from(secs));
+      setAdminErr("setMintInterval tx: " + tx.hash);
+      await tx.wait(); await loadContract();
+    } catch (e) { setAdminErr("setMintInterval failed: " + (e.message || e)); }
+  }
+
+  $("btnConnect").onclick = connect;
+  $("btnSwitch").onclick = switchToSepolia;
+  $("btnLoad").onclick = loadContract;
+  $("btnTransfer").onclick = doTransfer;
+  $("btnApprove").onclick = () => doApprove(false);
+  $("btnRevoke").onclick = () => doApprove(true);
+  $("btnAllowance").onclick = checkAllowance;
+  $("btnTransferFrom").onclick = doTransferFrom;
+  $("btnMintNext").onclick = mintNext;
+  $("btnFinalize").onclick = finalize;
+  $("btnBurn").onclick = burnFromTreasury;
+  $("btnSetInterval").onclick = setIntervalFn;
+
+  window.addEventListener("load", () => { const a = $("addr").value.trim(); if (a) loadContract(); });
+})();
+</script>
+</body>
+</html>

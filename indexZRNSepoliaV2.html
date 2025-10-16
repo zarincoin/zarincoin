@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ZRN — Sepolia Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Use the good ethers CDN (per your preference) -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; line-height: 1.45; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 16px 18px; margin: 12px 0; }
+    button { padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; }
+    input { padding: 8px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
+    .row { display: grid; grid-template-columns: 1fr 2fr auto; gap: 10px; align-items: center; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+    small { color: #666; }
+  </style>
+</head>
+<body>
+  <h1>Zarin (ZRN) — Sepolia Demo</h1>
+  <div class="card">
+    <p>This simple page connects to MetaMask on <b>Sepolia (chainId 11155111)</b> and reads the ZRN ERC-20.</p>
+    <ul>
+      <li>Contract: <span class="mono" id="contractAddr">0xf2695b87924b728e1478Cf9e0F326262c983e6cA</span></li>
+      <li>Token: <span id="tokenName">…</span> (<span id="tokenSymbol">…</span>), decimals: <span id="tokenDecimals">…</span></li>
+    </ul>
+    <button id="btnConnect">Connect Wallet</button>
+    <div id="whoami" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Your balances</h3>
+    <div>Network: <span id="network">…</span></div>
+    <div>Your address: <span class="mono" id="account">…</span></div>
+    <div>Total supply: <span id="totalSupply">…</span> ZRN</div>
+    <div>Your ZRN: <span id="myBalance">…</span> ZRN</div>
+  </div>
+
+  <div class="card">
+    <h3>Transfer</h3>
+    <div class="row" style="margin-top:8px">
+      <label for="to">Recipient</label>
+      <input id="to" placeholder="0xRecipient…" />
+      <button id="btnMax" type="button">Max?</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label for="amount">Amount (ZRN)</label>
+      <input id="amount" placeholder="e.g., 1.5" />
+      <button id="btnSend" type="button">Send</button>
+    </div>
+    <div id="txStatus" style="margin-top:8px"><small>—</small></div>
+  </div>
+
+  <script>
+    // --- Constants ---
+    const CONTRACT_ADDRESS = "0xf2695b87924b728e1478Cf9e0F326262c983e6cA"; // ZRN on Sepolia
+    const EXPECTED_CHAIN_ID = 11155111; // Sepolia
+    // Minimal ERC-20 ABI needed for this page
+    const ERC20_ABI = [
+      "function name() view returns (string)",
+      "function symbol() view returns (string)",
+      "function decimals() view returns (uint8)",
+      "function totalSupply() view returns (uint256)",
+      "function balanceOf(address) view returns (uint256)",
+      "function transfer(address to, uint256 amount) returns (bool)"
+    ];
+
+    let provider, signer, account, contract, decimals = 18;
+
+    function fmt(bn) {
+      try { return ethers.utils.formatUnits(bn, decimals); } catch { return String(bn); }
+    }
+    function parse(amountStr) {
+      return ethers.utils.parseUnits(amountStr || "0", decimals);
+    }
+
+    async function ensureSepolia() {
+      const net = await provider.getNetwork();
+      if (net.chainId !== EXPECTED_CHAIN_ID) {
+        throw new Error(`Wrong network. Please switch MetaMask to Sepolia (got chainId ${net.chainId}).`);
+      }
+      return net;
+    }
+
+    async function initReadOnly() {
+      provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+      contract = new ethers.Contract(CONTRACT_ADDRESS, ERC20_ABI, provider);
+      // Basic token data
+      const [n, s, d] = await Promise.all([contract.name(), contract.symbol(), contract.decimals()]);
+      decimals = d;
+      document.getElementById("tokenName").textContent = n;
+      document.getElementById("tokenSymbol").textContent = s;
+      document.getElementById("tokenDecimals").textContent = d;
+    }
+
+    async function refresh() {
+      const net = await provider.getNetwork();
+      document.getElementById("network").textContent = `${net.name} (#${net.chainId})`;
+
+      const total = await contract.totalSupply();
+      document.getElementById("totalSupply").textContent = fmt(total);
+
+      if (account) {
+        const bal = await contract.balanceOf(account);
+        document.getElementById("myBalance").textContent = fmt(bal);
+      }
+    }
+
+    async function connect() {
+      if (!window.ethereum) {
+        alert("MetaMask not found. Please install it.");
+        return;
+      }
+      provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+      await provider.send("eth_requestAccounts", []);
+      signer = provider.getSigner();
+      account = await signer.getAddress();
+      document.getElementById("whoami").innerHTML = `<small>Connected as <span class="mono">${account}</span></small>`;
+
+      await ensureSepolia();
+      contract = new ethers.Contract(CONTRACT_ADDRESS, ERC20_ABI, signer);
+      // read token meta once again via signer provider (decimals kept)
+      const [n, s, d] = await Promise.all([contract.name(), contract.symbol(), contract.decimals()]);
+      decimals = d;
+      document.getElementById("tokenName").textContent = n;
+      document.getElementById("tokenSymbol").textContent = s;
+      document.getElementById("tokenDecimals").textContent = d;
+
+      await refresh();
+
+      // Auto refresh when chain/account changes
+      provider.on("network", (_, old) => { if (old) location.reload(); });
+      window.ethereum.on?.("accountsChanged", () => location.reload());
+      window.ethereum.on?.("chainChanged", () => location.reload());
+    }
+
+    // Wire up UI
+    document.getElementById("btnConnect").addEventListener("click", connect);
+    document.getElementById("btnSend").addEventListener("click", async () => {
+      try {
+        const to = document.getElementById("to").value.trim();
+        const amount = document.getElementById("amount").value.trim();
+        if (!ethers.utils.isAddress(to)) throw new Error("Invalid recipient address");
+        if (!amount) throw new Error("Amount is empty");
+        document.getElementById("txStatus").innerHTML = "<small>Sending…</small>";
+        const tx = await contract.transfer(to, parseFloat(amount) ? parse(amount) : parse("0"));
+        document.getElementById("txStatus").innerHTML = `<small>Tx sent: <span class="mono">${tx.hash}</span>. Waiting…</small>`;
+        await tx.wait();
+        document.getElementById("txStatus").innerHTML = `<small>✅ Confirmed: <span class="mono">${tx.hash}</span></small>`;
+        await refresh();
+      } catch (e) {
+        document.getElementById("txStatus").innerHTML = `<small>❌ ${e.message}</small>`;
+      }
+    });
+    document.getElementById("btnMax").addEventListener("click", async () => {
+      try {
+        const bal = await contract.balanceOf(account);
+        document.getElementById("amount").value = fmt(bal);
+      } catch {}
+    });
+
+    // Initialize read-only meta on load
+    (async () => {
+      if (window.ethereum) {
+        try {
+          provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+          await initReadOnly();
+        } catch {}
+      }
+    })();
+  </script>
+</body>
+</html>
+

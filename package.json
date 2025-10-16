@@ -1,0 +1,42 @@
+{
+  "name": "zarincoin",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat --config hardhat.config.js compile",
+    "test": "hardhat --config hardhat.config.js test",
+    "deploy:mainnet": "hardhat --config hardhat.config.js run scripts/deploy-ledger-zarin.js --network mainnet",
+    "deploy:sepolia": "hardhat --config hardhat.config.js run scripts/deploy-ledger-zarin.js --network sepolia",
+    "deploy:arb1": "hardhat --config hardhat.config.js run scripts/deploy-ledger-zarin.js --network arbitrumOne",
+    "deploy:bsc": "hardhat --config hardhat.config.js run scripts/deploy-ledger-zarin.js --network bsc",
+    "verify:mainnet": "hardhat --config hardhat.verify.cjs verify --network mainnet --contract contracts/ZRNCoin.sol:ZRNCoin",
+    "verify:sepolia": "hardhat --config hardhat.verify.cjs verify --network sepolia --contract contracts/ZRNCoin.sol:ZRNCoin",
+    "verify:arb1": "hardhat --config hardhat.verify.cjs verify --network arbitrumOne --contract contracts/ZRNCoin.sol:ZRNCoin",
+    "verify:bsc": "hardhat --config hardhat.verify.cjs verify --network bsc --contract contracts/ZRNCoin.sol:ZRNCoin",
+    "fp:mainnet": "hardhat --config hardhat.config.js fp --network mainnet  --address 0xA6C63DC375b0206373fB99F856B4f71B311670B9",
+    "fp:sepolia": "hardhat --config hardhat.config.js fp --network sepolia  --address 0xf2695b87924b728e1478Cf9e0F326262c983e6cA",
+    "fp:arb1": "hardhat --config hardhat.config.js fp --network arbitrumOne --address 0x9F9d504ca217cfcAfbC250308385AD14b17bfBC1",
+    "fp:bsc":  "hardhat --config hardhat.config.js fp --network bsc         --address 0x0d431E5A8c290f11a0e63911eC4202FB60D2E80b"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@ethersproject/hardware-wallets": "^5.7.0",
+    "@ledgerhq/hw-app-eth": "^6.45.16",
+    "@ledgerhq/hw-transport-node-hid": "^6.29.10",
+    "@nomicfoundation/hardhat-chai-matchers": "^1.0.6",
+    "@nomicfoundation/hardhat-verify": "^2.0.14",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@openzeppelin/contracts": "4.9.6",
+    "@openzeppelin/hardhat-upgrades": "^1.28.0",
+    "chai": "^4.3.10",
+    "dotenv": "^17.2.1",
+    "ethers": "^5.8.0",
+    "hardhat": "^2.26.3",
+    "i": "^0.3.7",
+    "npm": "^11.5.2",
+    "solidity-coverage": "^0.7.22"
+  }
+}

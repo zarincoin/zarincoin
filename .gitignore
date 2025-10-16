@@ -1,0 +1,61 @@
+# Node / Hardhat
+node_modules/
+artifacts/
+cache/
+coverage/
+typechain/
+dist/
+check/
+site/
+.out/
+
+# Env & keys
+.env
+*.secret
+*.key
+
+# OS/editor
+.DS_Store
+Thumbs.db
+
+# OpenZeppelin manifest (local)
+.openzeppelin/
+
+# Local build/IDE noise
+build/
+ignition/
+
+# --- Keep-only rules for ZRN repo ---
+contracts/*
+!contracts/ZRNCoin.sol
+
+test/*
+!test/ZRNCoin.test.js
+
+scripts/*.jsO*
+scripts/*.jsG*
+
+scripts/*
+!scripts/*.js
+
+/*.html
+!/indexZRNSepolia*.html
+
+OldSol/
+py3/
+py3coin/
+mi6coin/
+npm/
+coverage.json
+commands.txt
+INTERVAL=60
+*MI6*.*
+
+# Design sources
+*.psd
+
+# macOS noise
+.localized
+
+# Local scratch files
+*.patch

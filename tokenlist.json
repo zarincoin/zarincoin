@@ -1,0 +1,61 @@
+{
+  "name": "Zarin Token List",
+  "logoURI": "logo/Zarin-logo-256.png",
+  "timestamp": "2025-10-16T00:00:00Z",
+  "version": { "major": 1, "minor": 0, "patch": 0 },
+  "tokens": [
+    {
+      "chainId": 1,
+      "address": "0xA6C63DC375b0206373fB99F856B4f71B311670B9",
+      "name": "Zarin Coin",
+      "symbol": "ZRN",
+      "decimals": 18,
+      "logoURI": "logo/Zarin-logo-256.png",
+      "extensions": {
+        "website": "https://zrncoin.com",
+        "telegram": "@zarintoken",
+        "ens": ["zrn.eth", "zrncoin.eth", "zarincoin.eth"]
+      }
+    },
+    {
+      "chainId": 42161,
+      "address": "0x9F9d504ca217cfcAfbC250308385AD14b17bfBC1",
+      "name": "Zarin Coin",
+      "symbol": "ZRN",
+      "decimals": 18,
+      "logoURI": "logo/Zarin-logo-256.png",
+      "extensions": {
+        "website": "https://zrncoin.com",
+        "telegram": "@zarintoken",
+        "ens": ["zrn.eth", "zrncoin.eth", "zarincoin.eth"]
+      }
+    },
+    {
+      "chainId": 56,
+      "address": "0x0d431E5A8c290f11a0e63911eC4202FB60D2E80b",
+      "name": "Zarin Coin",
+      "symbol": "ZRN",
+      "decimals": 18,
+      "logoURI": "logo/Zarin-logo-256.png",
+      "extensions": {
+        "website": "https://zrncoin.com",
+        "telegram": "@zarintoken",
+        "ens": ["zrn.eth", "zrncoin.eth", "zarincoin.eth"]
+      }
+    },
+    {
+      "chainId": 11155111,
+      "address": "0xf2695b87924b728e1478Cf9e0F326262c983e6cA",
+      "name": "Zarin Coin",
+      "symbol": "ZRN",
+      "decimals": 18,
+      "logoURI": "logo/Zarin-logo-256.png",
+      "extensions": {
+        "website": "https://zrncoin.com",
+        "telegram": "@zarintoken",
+        "ens": ["zrn.eth", "zrncoin.eth", "zarincoin.eth"]
+      }
+    }
+  ]
+}
+

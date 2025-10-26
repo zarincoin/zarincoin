@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-      - run: npm ci
+      - run: npm ci --no-audit --no-fund --loglevel=error
       - run: npx hardhat compile
       - run: npx hardhat test
 

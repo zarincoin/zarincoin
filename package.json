@@ -38,5 +38,9 @@
     "i": "^0.3.7",
     "npm": "^11.5.2",
     "solidity-coverage": "^0.7.22"
+  },
+  {
+    "engines": { "node": ">=18.17 <21" },
+    "packageManager": "npm@10.8.2"
   }
 }

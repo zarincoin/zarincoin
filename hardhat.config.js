@@ -23,10 +23,10 @@ module.exports = {
   },
   networks: {
     mainnet: {
-      url:
-        process.env.ETH_RPC_URL ||
-        (INFURA_KEY ? `https://mainnet.infura.io/v3/${INFURA_KEY}` : undefined),
-      //url: ETH_RPC_URL || "https://rpc.ankr.com/eth",
+      //url:
+      //  process.env.ETH_RPC_URL ||
+      //  (INFURA_KEY ? `https://mainnet.infura.io/v3/${INFURA_KEY}` : undefined),
+      url: ETH_RPC_URL || "https://rpc.ankr.com/eth",
       accounts: DEPLOYER_PK ? [DEPLOYER_PK] : [],
       chainId: 1,
     },
